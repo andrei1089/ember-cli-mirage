@@ -1,5 +1,5 @@
 import Ember from 'ember';
-import { pluralize } from './utils/inflector';
+import { singularize, pluralize } from './utils/inflector';
 import Pretender from 'pretender';
 import Db from './db';
 import controller from './controller';
@@ -52,6 +52,10 @@ export default function(options) {
   this.loadConfig = function(config) {
     config.call(this);
     this.timing = environment === 'test' ? 0 : (this.timing || 0);
+
+    if (this.useBackendAPI) {
+      this.pretender.shutdown();
+    }
   };
 
   this.stub = function(verb, path, handler, code, options) {
@@ -138,7 +142,26 @@ export default function(options) {
     var factory = new Factory();
 
     var attrs = factory.build(sequence);
-    return this.db[collection].insert(attrs);
+    var db_data = this.db[collection].insert(attrs);
+
+    if (this.useBackendAPI) {
+        var data = {};
+        data[singularize(collection)] = db_data;
+        var backend_data = null;
+
+        var request = Ember.$.ajax({
+            url: '/api/' + collection,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            async: false,
+            success: function(result) {
+              backend_data = result[singularize(collection)];
+            }
+        });
+        return backend_data;
+    }
+    return db_data;
   };
 
   this.createList = function(type, amount, overrides) {
