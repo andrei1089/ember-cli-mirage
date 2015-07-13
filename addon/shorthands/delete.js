@@ -77,6 +77,6 @@ export default {
 
     db[collection].remove(id);
 
-    return undefined;
+    return window.undefined;
   },
 };
