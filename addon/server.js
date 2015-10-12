@@ -115,14 +115,15 @@ export default class Server {
         var backend_data = null;
 
         Ember.$.ajax({
-            url: '/api/' + collection,
+            url: this.backendAPI + '/' + collection,
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(data),
             async: false,
             success: function(result) {
               backend_data = result[singularize(collection)];
-            }
+            },
+            beforeSend: this.ajaxBeforeSend
         });
         return backend_data;
     }
